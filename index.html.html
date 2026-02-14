@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>valentine.com</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+body{
+  height:100vh;
+  overflow:hidden;
+  background:linear-gradient(135deg,#ffcccc,#ff6666); /* light reddish Valentine colors */
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+.page{position:absolute;width:100%;height:100%;display:none;flex-direction:column;align-items:center;justify-content:center;padding:20px;}
+.active{display:flex;}
+h1{font-family:'Dancing Script',cursive;font-size:3rem;margin-bottom:15px;}
+button{padding:12px 25px;border:none;border-radius:30px;margin:8px;cursor:pointer;font-size:1rem;}
+/* YES button dark maroon */
+.yes-btn{
+  background:linear-gradient(45deg,#800000,#660000);
+  color:white;
+  box-shadow:0 0 20px rgba(128,0,0,0.6);
+}
+/* NO button white with dark maroon border/text */
+.no-btn{
+  background:white;
+  color:#800000;
+  border:2px solid #800000;
+}
+.menu-btn{background:white;color:#800000;}
+.spin{font-size:3rem;animation:spin 2s linear infinite;}
+@keyframes spin{from{transform:rotate(0);}to{transform:rotate(360deg);}}
+.confetti{position:fixed;width:8px;height:8px;top:0;animation:fall linear forwards;}
+@keyframes fall{to{transform:translateY(100vh) rotate(360deg);}}
+.firework{position:fixed;width:6px;height:6px;border-radius:50%;animation:explode 1s ease-out forwards;}
+@keyframes explode{to{transform:translate(var(--x),var(--y));opacity:0;}}
+#carArea{position:relative;width:300px;height:250px;background:rgba(255,255,255,0.2);border-radius:20px;}
+#car{position:absolute;font-size:28px;left:130px;top:200px;}
+.collectHeart{position:absolute;font-size:18px;}
+#kissArea{position:relative;width:300px;height:250px;background:rgba(255,255,255,0.2);border-radius:20px;}
+.kiss{position:absolute;font-size:24px;cursor:pointer;animation:pop 3s linear forwards;}
+@keyframes pop{0%{transform:translateY(50px);opacity:0;}20%{opacity:1;}100%{transform:translateY(-100px);opacity:0;}}
+#noMessage{font-style:italic;margin-top:10px;}
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Proposal -->
+<div class="page active" id="page1">
+<h1>Will You Be My Valentine, Yash? 💖</h1>
+<p style="font-style:italic;margin-bottom:20px;">I’m truly sorry for my past mistakes.<br>I genuinely want to continue our future together with more love and understanding ❤️</p>
+<button class="yes-btn" id="yesBtn">Yes 💘</button>
+<button class="no-btn" id="noBtn">No</button>
+<p style="margin-top:15px;">Something about us just feels right 💞</p>
+<p id="noMessage"></p>
+</div>
+
+<!-- PAGE 2: Celebration + I LOVE YOU -->
+<div class="page" id="page2">
+<h1>I LOVE YOU 💖</h1>
+<div class="spin">💍</div>
+<p style="margin-top:15px;">Yash, distance or mistakes can’t change this 💞</p>
+<button class="menu-btn" onclick="goToPage(3)">Play Games 💌</button>
+</div>
+
+<!-- PAGE 3: Game Menu -->
+<div class="page" id="page3">
+<h1>Choose Your Game 💖</h1>
+<button class="menu-btn" onclick="startCarGame()">🚗 Drive To My Heart</button>
+<button class="menu-btn" onclick="startKissGame()">💋 Catch My Kisses</button>
+<button class="menu-btn" onclick="goToPage(1)">Back</button>
+</div>
+
+<!-- PAGE 4: Car Game -->
+<div class="page" id="page4">
+<h1>🚗 Drive To My Heart</h1>
+<div id="carArea"><div id="car">🚗</div></div>
+<p>Hearts: <span id="carScore">0</span>/8</p>
+<button onclick="moveCar(-20,0)">⬅</button>
+<button onclick="moveCar(20,0)">➡</button>
+<button onclick="moveCar(0,-20)">⬆</button>
+<button onclick="moveCar(0,20)">⬇</button>
+<p id="carWin"></p>
+<button class="menu-btn" onclick="goToPage(3)">Back to Menu</button>
+</div>
+
+<!-- PAGE 5: Kiss Game -->
+<div class="page" id="page5">
+<h1>💋 Catch My Kisses</h1>
+<div id="kissArea"></div>
+<p>Kisses: <span id="kissScore">0</span>/8</p>
+<p id="kissWin"></p>
+<button class="menu-btn" onclick="goToPage(3)">Back to Menu</button>
+</div>
+
+<!-- Embedded Base64 Music -->
+<audio id="bgMusic" loop>
+  <source src="data:audio/mpeg;base64,SUQzBAAAAAAA..." type="audio/mpeg">
+  Your browser does not support audio.
+</audio>
+
+<script>
+const yesBtn = document.getElementById("yesBtn");
+const noBtn = document.getElementById("noBtn");
+const bgMusic = document.getElementById("bgMusic");
+const noMessage = document.getElementById("noMessage");
+const noTexts = ["Nope, not an option!", "Try again!", "You sure about that?", "Not happening!", "Think again!"];
+let noIndex = 0;
+
+function goToPage(num){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById("page"+num).classList.add("active");
+}
+
+/* YES button */
+yesBtn.onclick = () => {
+  goToPage(2);
+  bgMusic.volume = 0.5;
+  bgMusic.play().catch(e=>console.log("Tap to enable music"));
+  launchConfetti();
+  launchFireworks();
+};
+
+/* NO button */
+noBtn.onmouseover = noBtn.ontouchstart = () => {
+  const btnRect = yesBtn.getBoundingClientRect();
+  let left, top;
+  do {
+    left = Math.random()*(window.innerWidth-noBtn.offsetWidth);
+    top = Math.random()*(window.innerHeight-noBtn.offsetHeight);
+  } while (
+    left+noBtn.offsetWidth>btnRect.left && left<btnRect.right &&
+    top+noBtn.offsetHeight>btnRect.top && top<btnRect.bottom
+  );
+  noBtn.style.position = "absolute";
+  noBtn.style.left = left+"px";
+  noBtn.style.top = top+"px";
+  noMessage.innerText = noTexts[noIndex];
+  noIndex = (noIndex+1)%noTexts.length;
+};
+
+/* Confetti */
+function launchConfetti(){
+  for(let i=0;i<120;i++){
+    const c=document.createElement("div");
+    c.classList.add("confetti");
+    c.style.left=Math.random()*100+"vw";
+    c.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`;
+    c.style.animationDuration=(Math.random()*3+2)+"s";
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),5000);
+  }
+}
+
+/* Fireworks */
+function launchFireworks(){
+  for(let i=0;i<4;i++){
+    setTimeout(()=>{
+      let cx=Math.random()*window.innerWidth;
+      let cy=Math.random()*window.innerHeight/2;
+      for(let j=0;j<30;j++){
+        const fw=document.createElement("div");
+        fw.classList.add("firework");
+        fw.style.left=cx+"px";
+        fw.style.top=cy+"px";
+        fw.style.backgroundColor=`hsl(${Math.random()*360},100%,50%)`;
+        fw.style.setProperty('--x',(Math.random()*200-100)+"px");
+        fw.style.setProperty('--y',(Math.random()*200-100)+"px");
+        document.body.appendChild(fw);
+        setTimeout(()=>fw.remove(),1000);
+      }
+    },i*700);
+  }
+}
+
+/* CAR GAME */
+let carScore=0;
+function startCarGame(){
+  carScore=0;
+  document.getElementById("carScore").innerText=0;
+  document.getElementById("carWin").innerText="";
+  goToPage(4);
+  spawnCarHeart();
+}
+function moveCar(dx,dy){
+  const car=document.getElementById("car");
+  let left=car.offsetLeft+dx;
+  let top=car.offsetTop+dy;
+  left=Math.max(0,Math.min(270,left));
+  top=Math.max(0,Math.min(200,top));
+  car.style.left=left+"px";
+  car.style.top=top+"px";
+  checkCollision();
+}
+function spawnCarHeart(){
+  const h=document.createElement("div");
+  h.classList.add("collectHeart");
+  h.innerHTML="❤️";
+  h.style.left=Math.random()*260+"px";
+  h.style.top=Math.random()*180+"px";
+  document.getElementById("carArea").appendChild(h);
+}
+function checkCollision(){
+  const car=document.getElementById("car");
+  document.querySelectorAll(".collectHeart").forEach(h=>{
+    if(Math.abs(car.offsetLeft-h.offsetLeft)<20 && Math.abs(car.offsetTop-h.offsetTop)<20){
+      h.remove();
+      carScore++;
+      document.getElementById("carScore").innerText=carScore;
+      spawnCarHeart();
+      if(carScore>=8){
+        document.getElementById("carWin").innerText="You reached my heart 💖";
+        setTimeout(()=>goToPage(2),1500);
+      }
+    }
+  });
+}
+
+/* KISS GAME */
+let kissScore=0;
+function startKissGame(){
+  kissScore=0;
+  document.getElementById("kissScore").innerText=0;
+  document.getElementById("kissWin").innerText="";
+  goToPage(5);
+  let interval=setInterval(()=>{
+    const kiss=document.createElement("div");
+    kiss.classList.add("kiss");
+    kiss.innerHTML="💋";
+    kiss.style.left=Math.random()*260+"px";
+    kiss.style.top="180px";
+    kiss.onclick=()=>{
+      kiss.remove();
+      kissScore++;
+      document.getElementById("kissScore").innerText=kissScore;
+      if(kissScore>=8){
+        document.getElementById("kissWin").innerText="All kisses are yours 😘💞";
+        clearInterval(interval);
+        setTimeout(()=>goToPage(2),1500);
+      }
+    };
+    document.getElementById("kissArea").appendChild(kiss);
+    setTimeout(()=>kiss.remove(),3000);
+  },800);
+}
+</script>
+
+</body>
+</html>
